@@ -1,0 +1,48 @@
+[
+  {
+    "instruction": "What should I do if a friend's social media account posts something suspicious?",
+    "input": "",
+    "output": "If a family member or friend posts something out of character, contact them by another method to check if their account has been hacked. If it has, they should follow guidance on recovering hacked accounts.",
+    "source_document": "Social Media: how to use it safely",
+    "source_url": "https://www.ncsc.gov.uk/guidance/social-media-how-to-use-it-safely",
+    "chunk_number": 1,
+    "document_index": 1,
+    "generated_by": " gemini",
+    "scam_category": "account compromise",
+    "target_demographic": "general",
+    "threat_level": "high"
+  },
+  {
+    "instruction": "I sell on online marketplaces and received an email with a QR code to ‘verify my account’. Is this a risk?",
+    "input": "",
+    "output": "Yes—this pattern is mentioned explicitly. The alert notes quishing on online shopping platforms where sellers received a QR code via email to verify accounts or receive payment. Treat such emails with caution and, if in doubt, contact the platform directly via its official website rather than scanning the code.",
+    "source_document": "New quishing alert: £3.5 million lost last year to fraudulent QR codes",
+    "source_url": "https://www.actionfraud.police.uk/news/qr-codes",
+    "chunk_number": 1,
+    "document_index": 1,
+    "generated_by": " gemini",
+    "scam_category": "quishing",
+    "target_demographic": "online_sellers",
+    "threat_level": "high"
+  },
+  {
+    "instruction": "I paid money and now think it was a scam, can I get it back?",
+    "input": "",
+    "output": "If you've paid a scammer, contact your bank immediately. Depending on how you paid, they may be able to help. You should also report the scam to the FCA and Action Fraud. While it's not always possible to recover lost funds, reporting it can help prevent others from becoming victims.",
+    "source_document": "protect myself from scams",
+    "source_url": "https://www.fca.org.uk/consumers/protect-yourself-scams",
+    "chunk_number": 1,
+    "document_index": 0,
+    "generated_by": "gemini"
+  },
+  {
+    "instruction": "How can I protect my elderly parents from investment scams?",
+    "input": "",
+    "output": "The FCA warns that over-55s and particularly over-75s are at heightened risk of investment scams. Help your parents by educating them about warning signs: unexpected contact, pressure to act quickly, offers that sound too good to be true, and claims of exclusive opportunities. Encourage them to use the FCA Firm Checker before dealing with any financial firm. Make sure they know that the FCA would never ask for money or bank details. Help them check their bank statements regularly for suspicious transactions. Consider setting up power of attorney if they're vulnerable. Encourage them to talk to you or other trusted family members before making any investment decisions. Make sure they know how to report scams to the FCA on 0800 111 6768 or Action Fraud on 0300 123 2040. The FCA has specific resources for protecting older people from investment scams, including the ScamSmart campaign.",
+    "source_document": "FCA scam protection guidance - protecting vulnerable people",
+    "source_url": "https://www.fca.org.uk/consumers/protect-yourself-scams",
+    "chunk_number": 1,
+    "document_index": 1,
+    "generated_by": "gemini"
+  }
+]

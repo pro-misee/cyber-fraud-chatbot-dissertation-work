@@ -1,0 +1,762 @@
+Appendices
+Appendix A: Data Collection and Processing Protocols
+Technical procedures for web scraping and content processing
+class FraudGuidanceScraper: 
+    def __init__(self, source_name, delay=3):
+        self.source_name = source_name
+        project_root = Path(__file__).parent.parent
+        self.output_dir = project_root / "data_sources" / source_name / "scraped"
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.delay = delay
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Academic Research Bot) AppleWebKit/537.36'
+        })
+
+
+def scrape_linked_pages(soup, base_url, source_name, save_callback, session, delay=3, max_links=12):
+    links = soup.find_all('a', href=True)
+    relevant_links = []
+    
+    for link in links:
+        href = link['href']
+        full_url = urljoin(base_url, href)
+        
+        # Filter for relevant links and same domain
+        if (is_relevant_link(href, link.get_text()) and
+            base_url.split('/')[2] in full_url):
+            relevant_links.append((full_url, link.get_text().strip()))
+
+Complete implementation available at: https://github.com/[username]/[repository]/blob/main/scraper.py
+Site-specific configurations: https://github.com/[username]/[repository]/blob/main/site_scrapers.py
+Appendix B: Prompt Engineering Templates
+Complete document-to-dialogue conversion prompts and instructions used with Google Gemini 2.5 Pro:
+OBJECTIVE: Generate comprehensive Q&A pairs from UK cyber fraud guidance documents to train a cyber support chatbot. Create 20-50 high-quality Q&A pairs per document chunk to maximise training data extraction.
+GENERATION INSTRUCTIONS:
+1. QUESTION VARIETY - Create questions from multiple user perspectives:
+A) IMMEDIATE CRISIS QUESTIONS:
+- "I think I'm being scammed right now. What should I do?"
+- "Someone is pressuring me to pay money urgently. Is this legitimate?"
+- "I've just realised I might have been tricked. What are my next steps?"
+B) RETROSPECTIVE QUESTIONS:
+- "I paid money and now think it was a scam. Can I get it back?"
+- "I gave out my personal details to what might be a scammer, what should I do?"
+- "I've been a victim of [specific online scam type], how do I report it?"
+C) PREVENTION/AWARENESS QUESTIONS:
+- "How can I tell if [specific scenario] is a scam?"
+- "What are the warning signs of [online scam type mentioned in document]?"
+- "How do I protect myself from [specific cyber fraud method]?"
+2. RESPONSE GUIDELINES:
+TONE & STYLE:
+- Empathetic and non-judgmental
+- Clear, actionable guidance
+- Supportive but professional
+- Acknowledge user's emotions
+CONTENT REQUIREMENTS:
+- UK-specific contact numbers and procedures
+- Reference relevant UK organisations (Action Fraud, FCA, Citizens Advice, Police, etc.)
+- Include specific steps the user should take
+- Mention timeframes where relevant
+- Ground all advice in the source document content
+3. TECHNICAL SPECIFICATIONS:
+FORMAT: Generate a valid JSON array with this structure:
+[
+{
+    "instruction": "Question from user perspective",
+    "input": "",
+    "output": "Empathetic, UK-specific response with actionable advice",
+    "source_document": "Brief description of source document",
+    "source_url": "URL if available",
+    "chunk_number": "[chunk number]",
+    "document_index": "[document index in chunk]",
+    "generated_by": "gemini"
+}
+]
+CRITICAL REQUIREMENT: Do not repeat Questions. Each Q&A pair must make complete, standalone sense. A person reading any individual Q&A should fully understand both the question and answer without needing any additional context from other pairs or documents.
+Complete prompt template: https://github.com/[username]/[repository]/blob/main/QA_Generation_Prompt.txt
+Appendix C: Training Dataset
+Question-answer pairs demonstrating data quality and format consistency:
+[
+{
+    "instruction": "What should I do if a friend's social media account posts something suspicious?",
+    "input": "",
+    "output": "If a family member or friend posts something out of character, contact them by another method to check if their account has been hacked. If it has, they should follow guidance on recovering hacked accounts.",
+    "source_document": "Social Media: how to use it safely",
+    "source_url": "https://www.ncsc.gov.uk/guidance/social-media-how-to-use-it-safely",
+    "chunk_number": 1,
+    "document_index": 1,
+    "generated_by": "gemini",
+    "scam_category": "account compromise",
+    "target_demographic": "general",
+    "threat_level": "high"
+},
+{
+    "instruction": "I sell on online marketplaces and received an email with a QR code to 'verify my account'. Is this a risk?",
+    "input": "",
+    "output": "Yes—this pattern is mentioned explicitly. The alert notes quishing on online shopping platforms where sellers received a QR code via email to verify accounts or receive payment. Treat such emails with caution and, if in doubt, contact the platform directly via its official website rather than scanning the code.",
+    "source_document": "New quishing alert: £3.5 million lost last year to fraudulent QR codes",
+    "source_url": "https://www.actionfraud.police.uk/news/qr-codes",
+    "chunk_number": 1,
+    "document_index": 1,
+    "generated_by": "gemini",
+    "scam_category": "quishing",
+    "target_demographic": "online_sellers",
+    "threat_level": "high"
+},
+{
+    "instruction": "How can I protect my elderly parents from investment scams?",
+    "input": "",
+    "output": "The FCA warns that over-55s and particularly over-75s are at heightened risk of investment scams. Help your parents by educating them about warning signs: unexpected contact, pressure to act quickly, offers that sound too good to be true, and claims of exclusive opportunities. Encourage them to use the FCA Firm Checker before dealing with any financial firm. Make sure they know that the FCA would never ask for money or bank details. Help them check their bank statements regularly for suspicious transactions. Consider setting up power of attorney if they're vulnerable. Encourage them to talk to you or other trusted family members before making any investment decisions. Make sure they know how to report scams to the FCA on 0800 111 6768 or Action Fraud on 0300 123 2040. The FCA has specific resources for protecting older people from investment scams, including the ScamSmart campaign.",
+    "source_document": "FCA scam protection guidance - protecting vulnerable people",
+    "source_url": "https://www.fca.org.uk/consumers/protect-yourself-scams",
+    "chunk_number": 1,
+    "document_index": 1,
+    "generated_by": "gemini"
+}
+]
+Complete training dataset: https://github.com/[username]/[repository]/blob/main/sample_training_data.json
+Appendix D: Model Configuration Parameters
+Complete LoRA and training hyperparameter specifications from Unsloth fine-tuning implementation:
+LoRA Configuration:
+# Configure LoRA for optimal fraud assistant training
+model = FastLanguageModel.get_peft_model(
+    model,
+    r=48,                    # Low-rank adaptation rank
+    target_modules=[
+        "q_proj", "k_proj", "v_proj", "o_proj",
+        "gate_proj", "up_proj", "down_proj"
+    ],
+    lora_alpha=96,           # LoRA scaling parameter (2x rank)
+    lora_dropout=0,          # No dropout for stability
+    bias="none",             # No bias adaptation
+    use_gradient_checkpointing="unsloth",
+    random_state=3407,       # Reproducibility seed
+    use_rslora=False,
+    loftq_config=None,
+)
+Training Parameters:
+training_args = TrainingArguments(
+    per_device_train_batch_size=2,
+    per_device_eval_batch_size=2,
+    gradient_accumulation_steps=8,    # Effective batch size: 16
+    warmup_steps=10,
+    num_train_epochs=5,
+    learning_rate=1.5e-5,            # Conservative learning rate
+    fp16=not torch.cuda.is_bf16_supported(),
+    bf16=torch.cuda.is_bf16_supported(),
+    logging_steps=5,
+    optim="adamw_torch",             # Full precision optimiser
+    weight_decay=0.01,
+    lr_scheduler_type="cosine",
+    seed=3407,
+    output_dir="/content/drive/MyDrive/Dissertation/retrain/trained_models",
+    save_strategy="epoch",
+    save_total_limit=2,
+    eval_strategy="epoch",
+    load_best_model_at_end=True,
+    metric_for_best_model="eval_loss",
+    greater_is_better=False,
+    dataloader_pin_memory=True,
+    remove_unused_columns=False,
+    report_to="none",
+)
+Complete training notebook: https://github.com/[username]/[repository]/blob/main/1000_Unsloth_Fine_Tuning_with_perplexity.ipynb
+Appendix E: Evaluation Framework Rubrics
+Complete assessment criteria for all four evaluation dimensions used in manual evaluation:
+UK-Specific Knowledge Assessment (Dimension 1)
+Score
+Level
+Criteria
+Key Indicators
+5
+Excellent
+Complete accuracy across all UK-specific elements with comprehensive institutional knowledge
+Correct contact numbers
+Accurate regulatory references (FCA, PSR)
+Proper procedural sequences
+Current legislative compliance
+Comprehensive resource provision
+4
+Good
+Mostly accurate UK-specific information with minor gaps or outdated elements
+Correct primary contacts
+Accurate major procedures
+Minor regulatory omissions
+Largely current information
+Good resource coverage
+3
+Adequate
+Generally accurate but missing key UK-specific details or contains minor inaccuracies
+Basic contact information correct
+Some procedural accuracy
+Notable gaps in regulatory knowledge
+Partially outdated information
+Limited resource provision
+2
+Poor
+Significant inaccuracies or gaps in UK-specific knowledge that could mislead users
+Incorrect contact details
+Procedural errors
+Major regulatory gaps
+Outdated or misleading information
+Inadequate resource provision
+1
+Unacceptable
+Substantially incorrect or missing UK-specific information that could cause harm
+Wrong contact numbers
+Incorrect procedures
+No regulatory awareness
+Dangerously misleading information
+No relevant resources provided
+
+Conversational Quality Assessment (Dimension 2)
+Score
+Level
+Criteria
+Key Indicators
+5
+Excellent
+Sophisticated emotional intelligence with highly appropriate tone matching and comprehensive victim validation
+Perfect emotional recognition
+Exceptional tone appropriateness
+Strong victim validation
+Professional yet warm language
+Cultural sensitivity demonstrated
+4
+Good
+Strong emotional awareness with appropriate supportive responses and good tone consistency
+Good emotional recognition
+Appropriate tone most of the time
+Clear victim validation
+Generally supportive language
+Some cultural awareness
+3
+Adequate
+Basic emotional recognition with a generally supportive tone but lacks depth or consistency
+Basic emotional awareness
+Adequate tone matching
+Limited victim validation
+Standard supportive language
+Minimal cultural considerations
+2
+Poor
+Limited emotional awareness with occasionally inappropriate tone or inadequate support
+Poor emotional recognition
+Inconsistent tone
+Weak victim validation
+Sometimes unsupportive language
+Cultural insensitivity possible
+1
+Unacceptable
+No emotional awareness with inappropriate, judgmental, or harmful communication patterns
+No emotional recognition
+Inappropriate tone
+Victim blaming or judgment
+Unsupportive or harmful language
+Cultural insensitivity evident
+
+Practical Utility Assessment (Dimension 3)
+Score
+Level
+Criteria
+Key Indicators
+5
+Excellent
+Comprehensive, immediately actionable guidance with clear prioritisation and step-by-step instructions
+Clear immediate action steps
+Logical prioritization
+Complete procedural coverage
+Practical implementation details
+Follow-up guidance provided
+4
+Good
+Clear actionable guidance with good procedural coverage and mostly complete instructions
+Good immediate actions
+Reasonable prioritization
+Adequate procedural coverage
+Most implementation details
+Some follow-up guidance
+3
+Adequate
+Basic actionable guidance with adequate procedural coverage but lacking detail or clarity
+Basic action steps
+Some prioritization
+Limited procedural coverage
+Few implementation details
+Minimal follow-up guidance
+2
+Poor
+Limited actionable guidance with unclear procedures or incomplete instructions
+Unclear action steps
+Poor prioritization
+Incomplete procedures
+Missing implementation details
+No follow-up guidance
+1
+Unacceptable
+No clear actionable guidance or potentially harmful/misleading instructions
+No clear actions
+No prioritization
+Incorrect procedures
+No implementation guidance
+Potentially harmful advice
+
+Professional Boundary Adherence Assessment (Dimension 4)
+Score
+Level
+Criteria
+Key Indicators
+5
+Excellent
+Perfect boundary recognition with appropriate disclaimers and comprehensive professional referral guidance
+Clear scope limitations
+Appropriate disclaimers
+Comprehensive referral guidance
+Professional service awareness
+Ethical boundaries maintained
+4
+Good
+Strong boundary awareness with good referral practices and appropriate limitation acknowledgement
+Good scope awareness
+Adequate disclaimers
+Good referral practices
+Most professional services identified
+Boundaries generally maintained
+3
+Adequate
+Basic boundary recognition with standard referral practices, but occasional scope creep
+Basic scope awareness
+Standard disclaimers
+Adequate referral practices
+Some professional services identified
+Boundaries mostly maintained
+2
+Poor
+Limited boundary recognition with inadequate referrals and occasional inappropriate advice provision
+Poor scope awareness
+Weak disclaimers
+Limited referral practices
+Few professional services identified
+Boundary violations possible
+1
+Unacceptable
+No boundary recognition with inappropriate professional advice and potential harm from scope violations
+No scope awareness
+No disclaimers
+No referral practices
+Professional services ignored
+Serious boundary violations
+
+
+Appendix F: Technical Evaluation Implementation
+Cosine similarity setup, embedding model configuration, and calculation methods:
+class StandardCosineEvaluator:
+    def __init__(self, embedding_model_name: str = 'sentence-transformers/all-MiniLM-L6-v2'):
+        """Initialize the evaluator with standard sentence-transformers model"""
+        logger.info(f"Loading embedding model: {embedding_model_name}")
+        self.embedding_model = SentenceTransformer(embedding_model_name)
+        
+        # Load ground truth data
+        self.ground_truth_data = self._load_ground_truth()
+        self.fraud_categories = self._organize_by_categories()
+        
+        logger.info(f"Loaded {len(self.ground_truth_data)} ground truth samples")
+        logger.info(f"Organized into {len(self.fraud_categories)} fraud categories")
+    
+    def _load_ground_truth(self) -> List[Dict]:
+        """Load the 1000 Q&A training dataset as ground truth"""
+        potential_paths = [
+            'model_training/master_fraud_qa_dataset_1000_final.json',
+            'model_training/1000_master_fraud_qa_dataset.json',
+            'model_training/master_fraud_qa_dataset.json',
+            'model_training/278_master_fraud_qa_dataset.json'
+        ]
+        
+        for path in potential_paths:
+            try:
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    logger.info(f"Loaded ground truth from: {path} ({len(data)} samples)")
+                    return data
+            except FileNotFoundError:
+                continue
+       
+        logger.error("No ground truth dataset found. Tried paths: " + ", ".join(potential_paths))
+        return []
+Complete evaluation implementation: https://github.com/[username]/[repository]/blob/main/complete_evaluation_data.py
+Appendix G: Statistical Analysis Methods
+def evaluate_response_pair(self, question: str, baseline_response: str,
+                          finetuned_response: str, reference_response: str) -> Dict:
+    """Evaluate BM vs FM response against reference using combined approach"""
+    
+    # 1. Domain-weighted cosine similarity
+    ref_embedding = self.apply_domain_weights(reference_response)
+    bm_embedding = self.apply_domain_weights(baseline_response)
+    fm_embedding = self.apply_domain_weights(finetuned_response)
+    
+    bm_similarity = cosine_similarity([bm_embedding], [ref_embedding])[0][0]
+    fm_similarity = cosine_similarity([fm_embedding], [ref_embedding])[0][0]
+    
+    # 2. Entity accuracy evaluation
+    ref_entities = self.extract_entities(reference_response)
+    bm_entities = self.extract_entities(baseline_response)
+    fm_entities = self.extract_entities(finetuned_response)
+    
+    bm_entity_scores = self.calculate_entity_accuracy(bm_entities, ref_entities)
+    fm_entity_scores = self.calculate_entity_accuracy(fm_entities, ref_entities)
+    
+    # 3. Combined scoring
+    bm_entity_avg = np.mean(list(bm_entity_scores.values()))
+    fm_entity_avg = np.mean(list(fm_entity_scores.values()))
+    
+    # Weighted combination: 60% semantic similarity, 40% entity accuracy
+    bm_composite = (0.6 * bm_similarity) + (0.4 * bm_entity_avg)
+    fm_composite = (0.6 * fm_similarity) + (0.4 * fm_entity_avg)
+    
+    return {
+        'baseline_semantic': float(bm_similarity),
+        'finetuned_semantic': float(fm_similarity),
+        'baseline_entity': float(bm_entity_avg),
+        'finetuned_entity': float(fm_entity_avg),
+        'baseline_composite': float(bm_composite),
+        'finetuned_composite': float(fm_composite),
+        'improvement': float(fm_composite - bm_composite),
+        'semantic_improvement': float(fm_similarity - bm_similarity),
+        'entity_improvement': float(fm_entity_avg - bm_entity_avg)
+    }
+Complete statistical analysis: https://github.com/[username]/[repository]/blob/main/domain_weighted_evaluation.py
+Appendix H: Evaluation Question Responses
+Complete evaluation results for all 50 test scenarios between the Baseline Model (BM) and Fine-Tuned Model (FM)
+
+A
+UK-Specific Knowledge Assessment
+
+
+Action Fraud Contact
+Q1
+I've been scammed and need to report it. What's the official UK fraud reporting number?
+BM
+The official UK fraud reporting number is 0300 123 2040. You can also report fraud online at www.actionfraud.police.uk. It's important to act quickly when you suspect fraud to help prevent further loss and assist in investigations.
+FM
+You can report cyber fraud in the UK by calling Action Fraud on 0300 123 2040 or reporting online at actionfraud.police.uk. They provide guidance on how to report different types of fraud and connect you with appropriate services. Remember that reporting fraud helps law enforcement investigate scams and protect others from becoming victims. By reporting fraud, you're helping to make the UK a safer place for everyone.
+
+
+
+
+
+
+Banking Fraud Procedures
+Q2
+Someone called claiming to be from my bank asking me to move money to a 'safe account'. I think it's a scam. What should I do?
+BM
+It sounds like a potential scam. Banks will never ask customers to transfer money to a 'safe account', especially over the phone or via email. If you suspect fraud, report it immediately to your bank and Action Fraud at 0300 123 2040 or through their online reporting tool: actionfraud.police.uk. Change any passwords related to your accounts as a precaution.
+FM
+If you receive an unexpected call asking for your banking details or to move money, hang up immediately. This is likely a scam known as vishing (voice phishing). Banks will never ask you to move money to a 'safe account'. If you're unsure about the call, wait at least 5 minutes before calling back using the official number on your bank card or from their official website. Never use any phone numbers provided during the suspicious call.
+
+
+
+
+
+
+FCA Investment Scam Reporting
+Q3
+I think I've been targeted by an investment scam promising guaranteed returns. How do I report this?
+BM
+Investment scams can be reported to Action Fraud at 0300 123 2040 or through their online reporting tool: actionfraud.police.uk. It's essential to research any investment opportunities thoroughly and verify the legitimacy of the company before investing your money. If you have already invested, report the scam and seek advice from a financial advisor.
+FM
+Report investment scams to Action Fraud on 0300 123 2040. They will take your details and pass them to the National Fraud Intelligence Bureau (NFIB) for investigation. If you've lost money, contact your bank immediately to see if they can help secure your account and prevent further unauthorised transactions. You may also be able to report the scam to your credit card company if you paid by credit card. Remember, legitimate investment opportunities don't promise guaranteed returns - if something seems too good to be true, it probably is. Always verify any investment opportunity with official regulatory bodies before sharing personal details or investing money.
+
+
+
+
+
+
+PSR Reimbursement Rights
+Q4
+I was tricked into making an authorised push payment. Can I get my money back?
+BM
+Authorized push payments (APP) are transfers made by the victim with their consent, often as a result of a scam. If you've fallen victim to an APP scam, report it immediately to your bank and Action Fraud at 0300 123 2040 or through their online reporting tool: actionfraud.police.uk. Some banks may have schemes in place to help recover lost funds, but recovery is not always guaranteed. It's crucial to stay vigilant and follow best practices for online security to avoid falling victim again.
+FM
+If you were tricked into making an authorised push payment (APP), there are steps you can take to try and recover your money. First, report the scam to Action Fraud on 0300 123 2040. They will guide you through the process of reporting your experience. Next, contact your bank immediately and explain what happened. Your bank should have procedures in place for handling APP fraud. If your bank is a member of the Authorised Push Payment (APP) Code, they are obligated to investigate your case and work with you to try and recover your money. The APP Code provides guidance on how banks should handle these cases and what steps they should take to help victims. Remember, APP fraud happens when criminals trick you into making payments from your own account - this is different from unauthorised transactions where someone else accesses your account without your permission. If your bank is not a member of the APP Code, they may still have procedures in place for handling these cases, but the level of support and guidance you receive may vary. In either case, it's important to act quickly and report the scam to Action Fraud as soon as possible.
+
+
+
+B
+Conversational Quality Assessment
+
+
+Victim Shame Response
+Q5
+I'm so embarrassed. I can't believe I fell for this romance scam. I feel like such an idiot for sending money to someone I never met.
+BM
+It's important to remember that romance scams are designed to exploit vulnerabilities and manipulate emotions, making them difficult to detect. Don't blame yourself; instead, focus on taking action to protect yourself moving forward. Report the scam to Action Fraud at 0300 123 2040 or through their online reporting tool: actionfraud.police.uk. Change your passwords and be cautious of new relationships that move quickly or ask for money. Seek support from friends, family, or a trusted advisor if needed.
+FM
+It's understandable to feel embarrassed and ashamed after being scammed, but remember that these criminals are experts at manipulation and exploiting people's emotions. You're not alone - many people fall victim to romance scams every year. The important thing is to report the scam to Action Fraud on 0300 123 2040 so they can investigate and potentially recover some of your money. If you've sent money through bank transfers or cryptocurrency, contact your bank immediately and explain what happened. Your bank should have procedures in place for handling these cases. Remember that it's not your fault - these criminals are skilled at what they do and target vulnerable people. Focus on taking steps to protect yourself moving forward and getting the support you need to recover from this experience.
+
+
+
+
+
+
+Panic/Distress Response
+Q6
+HELP! I just realised I've been scammed out of £5000. I'm panicking and don't know what to do. My family is going to kill me.
+BM
+I'm sorry to hear about your situation. It's important to take action as soon as possible. Report the scam to Action Fraud at 0300 123 2040 or through their online reporting tool: actionfraud.police.uk. Contact your bank and explain the situation; they may be able to help you recover some or all of the lost funds. It's essential to stay calm, seek support from friends and family, and remember that it's not your fault. Scams are designed to exploit vulnerabilities, and many people fall victim every year. Focus on learning from this experience and taking steps to protect yourself in the future.
+FM
+It's understandable to feel overwhelmed and scared when you realise you've been scammed, but remember that help is available. Contact Action Fraud on 0300 123 2040 immediately to report the scam. They will guide you through the process of reporting your experience and can provide advice on what steps to take next. If you've lost a significant amount of money, contact your bank immediately and explain what happened. Your bank should have procedures in place for handling these cases. Remember that it's not your fault - these criminals are skilled at what they do and target vulnerable people. Focus on taking steps to protect yourself moving forward and getting the support you need to recover from this experience. If you're feeling overwhelmed or struggling to cope, consider reaching out to a mental health helpline for additional support. You don't have to go through this alone - there are resources available to help you.
+
+
+
+
+
+
+Anger/Frustration Response
+Q7
+I was tricked into transferring £8,000 to fake bank security staff. My real bank says they can't help because I authorised it. This is ridiculous! What can they actually do?
+BM
+I understand your frustration. Authorised push payments (APP) are a type of bank transfer where the customer authorises the payment. Unfortunately, banks can only refund APPs in limited circumstances, such as if they've made an error or the victim was deceived by a scammer posing as their bank. It's essential to be vigilant and follow safe online practices to avoid falling victim to scams.
+
+In your case, it may still be worth contacting your bank to explain the situation and see if they can offer any assistance or advice. Additionally, you should report the incident to Action Fraud on 0300 123 2040 or online at www.actionfraud.police.uk. They may be able to provide further guidance or support.
+FM
+If you've been scammed out of money by fraudsters posing as bank staff, your bank may be able to help you recover some or all of the money. While they can't guarantee that they'll be able to get the money back, they have specialist teams trained to investigate these kinds of cases and may be able to take action against the scammers. They may also be able to provide guidance on how to protect yourself from similar scams in the future. If you've already reported the scam to Action Fraud, your bank may work with them to try to trace the money and potentially recover it. Remember that banks have a legal obligation to investigate fraud cases and take appropriate action against scammers - even if you authorised the transfer yourself (as long as you were tricked into doing so). If you're struggling to get help from your bank, contact Action Fraud on 0300 123 2040 for guidance on how to escalate your case. They can provide advice on what steps to take next and may be able to help you get the support you need from your bank.
+
+
+
+
+
+
+Confusion/Uncertainty Response
+Q8
+I'm not sure if what happened to me was actually a scam or not. Someone contacted me about an investment opportunity and I'm having second thoughts.
+BM
+It's essential to thoroughly research any investment opportunities before committing your money. If you have doubts, trust your instincts and investigate further. Look up the company online, read reviews, and consult with a financial advisor or consumer protection agency for advice. Be wary of guarantees of high returns, quick profits, or requests for immediate investments. If the opportunity seems too good to be true, it probably is.
+FM
+If you're unsure whether something is a legitimate investment opportunity or a scam, it's always best to err on the side of caution. Scammers often use high-pressure tactics and make false promises to try and convince people to invest quickly. Legitimate investments don't promise guaranteed returns - if something sounds too good to be true, it probably is. If you're unsure about an investment opportunity, do your research and consider seeking advice from a financial advisor before making any decisions. Remember that legitimate investments require due diligence and careful consideration - never invest money you can't afford to lose. If you suspect you may have been targeted by a scam, contact Action Fraud on 0300 123 2040 for guidance and support.
+
+
+Complete models responses: https://github.com/[username]/[repository]
+Appendix I: Manual Gradings
+No
+Assessment 
+Baseline Score
+Fine-tuned Score
+Q1
+I've been scammed and need to report it. What's the official UK fraud reporting number?
+
+
+
+
+
+
+UK-Specific Contact Accuracy
+5
+5
+
+
+Conversational Quality/Empathy
+2
+2
+
+
+Practical Utility Quality
+3
+4
+
+
+Professional Boundary Adherence
+4
+4
+Q2
+Someone called claiming to be from my bank asking me to move money to a 'safe account'. I think it's a scam. What should I do?
+
+
+
+
+
+
+UK-Specific Contact Accuracy
+4
+3
+
+
+Conversational Quality/Empathy
+3
+5
+
+
+Practical Utility Quality
+3
+4
+
+
+Professional Boundary Adherence
+5
+5
+Q3
+I think I've been targeted by an investment scam promising guaranteed returns. How do I report this?
+
+
+
+
+
+
+UK-Specific Contact Accuracy
+4
+5
+
+
+Conversational Quality/Empathy
+4
+4
+
+
+Practical Utility Quality
+3
+5
+
+
+Professional Boundary Adherence
+4
+5
+Q4
+I was tricked into making an authorised push payment. Can I get my money back?
+
+
+
+
+
+
+UK-Specific Contact Accuracy
+4
+5
+
+
+Conversational Quality/Empathy
+3
+3
+
+
+Practical Utility Quality
+3
+5
+
+
+Professional Boundary Adherence
+4
+5
+
+
+No
+Assessment 
+Baseline Score
+Fine-tuned Score
+Q5
+I'm so embarrassed. I can't believe I fell for this romance scam. I feel like such an idiot for sending money to someone I never met.
+
+
+
+
+
+
+UK-Specific Contact Accuracy
+4
+4
+
+
+Conversational Quality/Empathy
+3
+5
+
+
+Practical Utility Quality
+3
+4
+
+
+Professional Boundary Adherence
+3
+5
+Q6
+HELP! I just realised I've been scammed out of £5000. I'm panicking and don't know what to do. My family is going to kill me.
+
+
+
+
+
+
+UK-Specific Contact Accuracy
+5
+5
+
+
+Conversational Quality/Empathy
+4
+4
+
+
+Practical Utility Quality
+3
+4
+
+
+Professional Boundary Adherence
+5
+5
+Q7
+I was tricked into transferring £8,000 to fake bank security staff. My real bank says they can't help because I authorised it. This is ridiculous! What can they actually do?
+
+
+
+
+
+
+UK-Specific Contact Accuracy
+4
+5
+
+
+Conversational Quality/Empathy
+4
+3
+
+
+Practical Utility Quality
+3
+5
+
+
+Professional Boundary Adherence
+4
+5
+Q8
+I'm not sure if what happened to me was actually a scam or not. Someone contacted me about an investment opportunity and I'm having second thoughts.
+
+
+
+
+
+
+UK-Specific Contact Accuracy
+3
+5
+
+
+Conversational Quality/Empathy
+4
+5
+
+
+Practical Utility Quality
+3
+5
+
+
+Professional Boundary Adherence
+5
+5
+
+Complete responses gradings: https://github.com/[username]/[repository]
+Appendix J: Additional materials
+All code resources: https://github.com/[username]/[repository]
+Hugging face: 

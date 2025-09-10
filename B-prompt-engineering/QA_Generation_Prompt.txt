@@ -1,0 +1,140 @@
+OBJECTIVE: Generate comprehensive Q&A pairs from UK cyber fraud guidance documents to train a cyber support chatbot. Create 20-50 high-quality Q&A pairs per document chunk to maximize training data extraction.
+
+SOURCE FILE: data_sources/actionfraud/scraped/compiled_all.json. Auto-split the dataset into chunks of 2–3 documents each
+OUTPUT LOCATION: Create folder data_sources/actionfraud/processed/ and save your output as output.json or something else
+
+DOCUMENT CONTEXT: 
+[Process the compiled_all.json file from actionfraud data source]
+
+GENERATION INSTRUCTIONS:
+
+1. QUESTION VARIETY - Create questions from multiple user perspectives:
+   
+   A) IMMEDIATE CRISIS QUESTIONS:
+   - "I think I'm being scammed right now, what should I do?"
+   - "Someone is pressuring me to pay money urgently, is this legitimate?"
+   - "I've just realized I might have been tricked, what are my next steps?"
+   
+   B) RETROSPECTIVE QUESTIONS:
+   - "I paid money and now think it was a scam, can I get it back?"
+   - "I gave out my personal details to what might be a scammer, what should I do?"
+   - "I've been a victim of [specific online scam type], how do I report it?"
+   
+   C) PREVENTION/AWARENESS QUESTIONS:
+   - "How can I tell if [specific scenario] is a scam?"
+   - "What are the warning signs of [online scam type mentioned in document]?"
+   - "How do I protect myself from [specific cyber fraud method]?"
+   
+   D) PROCEDURAL QUESTIONS:
+   - "Who should I contact about [specific cyber fraud type]?"
+   - "What information do I need when reporting [online scam type]?"
+   - "How long does it take to [resolve/investigate specific issue]?"
+   
+   E) EMOTIONAL/SUPPORT QUESTIONS:
+   - "I feel embarrassed about being scammed, is this normal?"
+   - "How do I cope with the stress of being a cyber fraud victim?"
+   - "Will people judge me for falling for this online scam?"
+
+   ...
+
+2. RESPONSE GUIDELINES:
+
+   TONE & STYLE:
+   - Empathetic and non-judgmental
+   - Clear, actionable guidance
+   - Supportive but professional
+   - Acknowledge user's emotions
+
+   CONTENT REQUIREMENTS:
+   - UK-specific contact numbers and procedures
+   - Reference relevant UK organizations (Action Fraud, FCA, Citizens Advice, Police etc.)
+   - Include specific steps the user should take
+   - Mention timeframes where relevant
+   - Ground all advice in the source document content
+
+   RESPONSE LENGTH: 100-300 words per response
+
+3. TECHNICAL SPECIFICATIONS:
+
+   FORMAT: Generate valid JSON array with this structure:
+   [
+     {
+       "instruction": "Question from user perspective",
+       "input": "",
+       "output": "Empathetic, UK-specific response with actionable advice",
+       "source_document": "Brief description of source document",
+       "source_url": "URL if available",
+       "chunk_number": "[chunk number]",
+       "document_index": "[document index in chunk]",
+       "generated_by": "gemini"
+     }
+   ]
+
+4. CONTENT EXTRACTION STRATEGY:
+
+   From each document chunk, identify and create Q&As covering:
+   - Every online scam type mentioned
+   - All procedural steps described
+   - Contact information provided
+   - Warning signs listed
+   - Prevention advice given
+   - Legal/regulatory information
+   - User support resources
+
+5. QUESTION PHRASING VARIATIONS:
+
+   Use diverse question starters:
+   - "What should I do if..."
+   - "How can I tell if..."
+   - "I'm worried that..."
+   - "Someone told me..."
+   - "I received a message saying..."
+   - "Is it normal for..."
+   - "Can you help me understand..."
+   - "What happens when..."
+   - "How long does it take to..."
+   - "Who can I contact about..."
+   - ...
+
+6. SPECIFIC UK CONTEXT REQUIREMENTS:
+
+   Include in responses where relevant:
+   - Action Fraud
+   - FCA Consumer Helpline
+   - Citizens Advice
+   - UK Finance fraud reporting
+   - Police non-emergency
+   - Specific UK legal protections
+   - UK banking procedures
+   - UK regulatory bodies
+
+7. QUALITY CONTROL:
+
+   Ensure each Q&A pair:
+   - Uses natural, victim-like language in questions
+   - Provides accurate UK-specific information
+   - Maintains consistent empathetic tone
+   - Includes specific actionable steps
+   - References appropriate UK authorities
+   - Stays grounded in source document content
+   - Avoids generic advice not supported by the document
+   - MAKES STANDALONE SENSE: Each Q&A pair must be completely self-contained and understandable without requiring knowledge of other pairs or external context
+
+EXAMPLE OUTPUT STRUCTURE:
+
+[
+  {
+    "instruction": "I got a call from someone claiming to be from my bank asking for my PIN number. They knew some of my details already. Should I have given it to them?",
+    "input": "",
+    "output": "No, you should never give your PIN to anyone, even if they claim to be from your bank. Legitimate banks will never ask for your PIN, full password, or card details over the phone. The fact that they knew some of your details doesn't make them genuine - scammers often have access to leaked data or use social engineering to gather information. You did the right thing by being cautious. I'd recommend contacting your bank directly using the number on the back of your card to report this incident. You should also report it to Action Fraud on 0300 123 2040. If you did share any information, contact your bank immediately to secure your account. Remember, it's always better to hang up and call back on a verified number if you're unsure about any call.",
+    "source_document": "Banking security guidance from FCA consumer protection",
+    "source_url": "https://example-source-url.com",
+    "chunk_number": 1,
+    "document_index": 1,
+    "generated_by": "gemini"
+  }
+]
+
+TARGET: Generate 20-50 Q&A pairs that comprehensively cover all fraud-related content in the provided document chunk. Focus on creating diverse, realistic user scenarios while maintaining UK-specific accuracy and empathetic support. Make an extra json file in the processed folder with the summary of the total QA pairs generated.
+
+CRITICAL REQUIREMENT: Do not repeat Questions. Each Q&A pair must make complete standalone sense. A person reading any individual Q&A should fully understand both the question and answer without needing any additional context from other pairs or documents. Ensure questions are specific enough and answers are comprehensive enough to be independently useful.
